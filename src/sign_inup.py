@@ -5,6 +5,12 @@ from PyQt5.QtCore import QTimer
 
 class Ui_SignInUpWindow(object):
     def setupUi(self, SignWindow):
+        """
+        Thiết lập giao diện người dùng chính.
+
+        Args:
+                SignWindow (QMainWindow): Đối tượng cửa sổ đăng nhập/đăng ký cần thiết lập giao diện.
+        """
         SignWindow.setObjectName("SignWindow")
         SignWindow.resize(1944, 962)
 
@@ -621,28 +627,82 @@ class Ui_SignInUpWindow(object):
 
         self.retranslateUi(SignWindow)
         QtCore.QMetaObject.connectSlotsByName(SignWindow)
+
     def change_to_signup(self):
+        """
+        Chuyển đổi giao diện từ đăng nhập (Sign In) sang đăng ký (Sign Up).
+
+        Phương thức này thực hiện các bước sau:
+
+                1. Ẩn khung đăng nhập (`self.frame_signin`).
+                2. Hiển thị khung đăng ký (`self.frame_signup`).
+                3. Hiển thị nút chuyển sang đăng nhập (`self.btnsignin`).
+                4. Ẩn nút chuyển sang đăng ký (`self.btnsignup`).
+
+        Lưu ý:
+                - Phương thức này giả định rằng các thành phần giao diện `self.frame_signin`, `self.frame_signup`,
+                        `self.btnsignin` và `self.btnsignup` đã được khai báo và thiết lập trước đó.
+        """
         self.frame_signin.hide()
         self.frame_signup.show()
         self.btnsignin.show()
         self.btnsignup.hide()
 
     def change_to_signin(self):
+        """
+        Chuyển đổi giao diện từ đăng ký (Sign Up) sang đăng nhập (Sign In).
+
+        Phương thức này thực hiện các bước sau:
+
+                1. Ẩn khung đăng ký (`self.frame_signup`).
+                2. Hiển thị khung đăng nhập (`self.frame_signin`).
+                3. Hiển thị nút chuyển sang đăng ký (`self.btnsignup`).
+                4. Ẩn nút chuyển sang đăng nhập (`self.btnsignin`).
+
+        Lưu ý:
+                - Phương thức này giả định rằng các thành phần giao diện `self.frame_signup`, `self.frame_signin`,
+                        `self.btnsignup` và `self.btnsignin` đã được khai báo và thiết lập trước đó.
+        """
         self.frame_signup.hide()
         self.frame_signin.show()
         self.btnsignup.show()
         self.btnsignin.hide()
 
     def show_message(self, message):
+        """
+        Hiển thị thông báo lỗi.
+
+        Args:
+                message (str): Nội dung thông báo lỗi cần hiển thị.
+        """
         # Hiển thị thông báo lỗi
         self.label.setText(message)
         self.label.show()
 
     def hide_message(self):
+        """
+        Ẩn thông báo lỗi
+        """
         # Ẩn thông báo lỗi
         self.label.hide()
 
     def confirm_signin(self):
+        """
+        Xác nhận đăng nhập.
+
+        Thực hiện các bước sau:
+
+                1. Truy vấn cơ sở dữ liệu để lấy thông tin tên người dùng và mật khẩu.
+                2. Lấy thông tin đăng nhập từ các trường nhập liệu.
+                3. Kiểm tra xem các trường có được điền đầy đủ không.
+                4. So sánh thông tin đăng nhập với dữ liệu từ cơ sở dữ liệu.
+                5. Hiển thị thông báo thành công hoặc thất bại.
+                6. Nếu đăng nhập thành công, chờ 2 giây và gọi phương thức `wait`.
+                7. Đóng kết nối cơ sở dữ liệu.
+
+        Raises:
+                pymysql.Error: Nếu có lỗi xảy ra trong quá trình truy vấn cơ sở dữ liệu.
+        """
         db = Database()
         info = db.query("SELECT cust_name, cust_password FROM customer")
         name = self.nameinput_place_2.toPlainText()
@@ -664,6 +724,23 @@ class Ui_SignInUpWindow(object):
         db.connection.close()
 
     def confirm_signup(self):
+        """
+        Xác nhận đăng ký.
+
+        Thực hiện các bước sau:
+
+                1. Truy vấn cơ sở dữ liệu để lấy thông tin người dùng hiện có.
+                2. Lấy thông tin đăng ký từ các trường nhập liệu.
+                3. Kiểm tra xem các trường có được điền đầy đủ không.
+                4. Kiểm tra xem email đã tồn tại chưa.
+                5. Thêm thông tin người dùng mới vào cơ sở dữ liệu.
+                6. Hiển thị thông báo thành công.
+                7. Chờ 2 giây và gọi phương thức `wait`.
+                8. Đóng kết nối cơ sở dữ liệu.
+
+        Raises:
+                pymysql.Error: Nếu có lỗi xảy ra trong quá trình truy vấn hoặc thêm dữ liệu vào cơ sở dữ liệu.
+        """
         db = Database()
         info = db.query("SELECT * FROM customer")
         name = self.nameinput_place.toPlainText()
@@ -682,7 +759,19 @@ class Ui_SignInUpWindow(object):
         self.show_message("Sign up Successfully") 
         QTimer.singleShot(2000, self.wait)
         db.connection.close()
+
     def wait(self):
+        """
+        Chờ 2 giây trước khi chuyển đến trang thông tin tài khoản (`Ui_AccPageWindow`).
+
+        Thực hiện các bước sau:
+
+                1. Ẩn thông báo đăng nhập thành công (nếu có).
+                2. Tạo một đối tượng cửa sổ mới (`self.OtherWindow`) thuộc lớp `QtWidgets.QMainWindow`.
+                3. Tạo một đối tượng giao diện (`self.ui`) thuộc lớp `Ui_AccPageWindow`.
+                4. Thiết lập giao diện cho cửa sổ mới bằng `self.ui.setupUi(self.OtherWindow)`.
+                5. Hiển thị cửa sổ mới (`self.OtherWindow.show()`).
+        """
         self.hide_message()
         self.OtherWindow = QtWidgets.QMainWindow()
         self.ui = Ui_AccPageWindow()
@@ -690,6 +779,12 @@ class Ui_SignInUpWindow(object):
         self.OtherWindow.show()
 
     def retranslateUi(self, SignWindow):
+        """
+        Cài đặt lại nội dung văn bản cho các thành phần giao diện.
+
+        Args:
+            SignWindow (QMainWindow): Đối tượng cửa sổ đăng nhập cần cài đặt lại nội dung.
+        """
         _translate = QtCore.QCoreApplication.translate
         SignWindow.setWindowTitle(_translate("SignWindow", "SignWindow"))
         self.btnsignup.setText(_translate("SignWindow", "Sign up"))

@@ -8,7 +8,29 @@ from PyQt5.QtGui import QKeySequence
 from database import Database
 
 class Ui_AccPageWindow(QtWidgets.QMainWindow):
+    """
+    Giao diện người dùng cho trang thông tin tài khoản (Account Page).
+
+    Class này thiết lập và quản lý giao diện hiển thị thông tin bài hát,
+    bao gồm các thành phần như:
+
+        - Thông tin bài hát (tên, hình ảnh poster,...)
+        - Các nút điều khiển (play, pause, stop,...)
+
+    Attributes:
+        None (Tất cả các thành phần giao diện được khởi tạo trong phương thức `setupUi`)
+
+    Methods:
+        setupUi(self, AccPageWindow): Thiết lập giao diện người dùng.
+        retranslateUi(self, AccPageWindow): Dịch lại nội dung văn bản trên giao diện.
+    """
     def setupUi(self, AccPageWindow):
+        """
+        Khởi tạo và thiết lập các thành phần giao diện cho trang thông tin tài khoản.
+
+        Args:
+                MainWindow (QtWidgets.QMainWindow): Cửa sổ chính chứa trang thông tin tài khoản.
+        """
         AccPageWindow.setObjectName("AccPageWindow")
         AccPageWindow.resize(1944, 1227)
         AccPageWindow.setMaximumSize(QtCore.QSize(16777215, 16777215))
@@ -1125,16 +1147,62 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
         self.toplike.clicked.connect(self.show_toplike)
         self.LDmode = 0
         self.mode.clicked.connect(self.change_mode)
-
+        db.connection.close()
         #length of the tracks
         self.length = self.scrollAreaAllTrack.findChildren(QtWidgets.QFrame, name= "frame_track")
 
     def onPressed(self):
+        """
+        Xử lý sự kiện khi nút (có thể là nút tìm kiếm) được nhấn.
+
+        Thực hiện các bước sau:
+    
+                1. Lấy văn bản từ trường nhập liệu (`self.lineEdit`).
+                2. Tiền xử lý văn bản (`self.preprocess()`).
+                3. In ra thông báo cho biết văn bản đang được tìm kiếm.
+
+        Lưu ý:
+                - Phương thức này giả định rằng `self.lineEdit` là một thành phần giao diện (ví dụ: QLineEdit) đã được khai báo và kết nối.
+                - Phương thức `self.preprocess()` được gọi để tiền xử lý văn bản trước khi tìm kiếm (ví dụ: loại bỏ khoảng trắng thừa, chuyển đổi chữ hoa/thường, ...). Bạn cần tự định nghĩa phương thức này.
+        """
         self.text = self.lineEdit.text()
         self.preprocess()
         print(f'Searching for: {self.text}')
         
     def onPressed_2(self):
+        """
+        Thực hiện tìm kiếm bài hát và hiển thị kết quả.
+
+        Phương thức này thực hiện các bước sau:
+    
+        1. Tiền xử lý văn bản tìm kiếm:
+                - Chuyển đổi văn bản tìm kiếm thành chữ thường.
+                - Loại bỏ dấu tiếng Việt.
+                - Loại bỏ khoảng trắng và các ký tự đặc biệt.
+        2. Truy vấn cơ sở dữ liệu:
+                - Lấy thông tin tất cả các bài hát từ cơ sở dữ liệu.
+        3. Tìm kiếm bài hát:
+                - So sánh văn bản tìm kiếm đã tiền xử lý với tên của từng bài hát trong cơ sở dữ liệu (cũng đã tiền xử lý).
+                - Nếu tìm thấy, lưu chỉ số của bài hát (`self.search_index`) và tạo một khung hiển thị thông tin bài hát (`self.frame_searchTrack`).
+                - Khung hiển thị bao gồm:
+                        - Nút play/pause (ẩn nút pause ban đầu)
+                        - Ảnh bìa bài hát
+                        - Tên bài hát
+                        - Thời lượng bài hát
+                - Thêm khung hiển thị vào khu vực cuộn (`self.scrollAreaSearchTrack`).
+        4. Hiển thị kết quả:
+                - Nếu tìm thấy bài hát, hiển thị khu vực cuộn chứa kết quả tìm kiếm và ẩn các khu vực cuộn khác.
+                - Nếu không tìm thấy bài hát, hiển thị một khung trống có thông báo "Không có bài hát mà bạn tìm kiếm".
+
+        Lưu ý:
+                - Phương thức này giả định rằng `self.lineEdit_2` là thành phần nhập liệu chứa văn bản tìm kiếm.
+                - `self.scrollAreaSearchTrack`, `self.scrollArea_TopLikeTrack`, `self.scrollArea_RecommendTrack`, `self.scrollArea_AllTrack` là các thành phần giao diện hiển thị các danh sách bài hát khác nhau.
+                - `self.search_buttons`, `self.track_img`, `self.track_name`, `self.search_index` là các thuộc tính của đối tượng để quản lý trạng thái và giao diện của kết quả tìm kiếm.
+                - Các nút play/pause được kết nối với các phương thức `search_play` và `search_pause` (cần được định nghĩa trước đó).
+
+        Raises:
+                pymysql.Error: Nếu có lỗi xảy ra trong quá trình truy vấn cơ sở dữ liệu.
+        """
         _translate = QtCore.QCoreApplication.translate
         def preprocess(text):
     # Chuyển đổi sang chữ thường
@@ -1296,8 +1364,35 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
         self.scrollArea_TopLikeTrack.hide()
         self.scrollArea_RecommendTrack.hide()
         self.scrollArea_AllTrack.hide()
+        db.connection.close()
 
     def play(self):
+        """
+        Bắt đầu hoặc tiếp tục phát một bài hát.
+
+        Phương thức này thực hiện các bước sau:
+    
+                1. Xác định nút được nhấn: Lấy thông tin về nút ("Play" hoặc "Pause") đã kích hoạt phương thức.
+                2. Ẩn nút hiện tại và hiển thị nút tiếp theo (nếu có):
+                        - Nếu nhấn "Play", ẩn nút "Play" và hiển thị nút "Pause".
+                        - Nếu nhấn "Pause", ẩn nút "Pause" và hiển thị nút "Play".
+                3. Xác định chỉ số của bài hát: Tính toán chỉ số bài hát tương ứng với nút được nhấn dựa trên vị trí của nút trong danh sách `self.buttons`.
+                4. Truy vấn cơ sở dữ liệu: Lấy thông tin bài hát (tên, hình ảnh) từ cơ sở dữ liệu dựa trên chỉ số bài hát.
+                5. Cập nhật giao diện người dùng:
+                        - Thay đổi hình ảnh bài hát hiển thị (`self.track_img`).
+                        - Thay đổi tên bài hát hiển thị (`self.track_name`).
+                        - Hiển thị/ẩn các nút "Play/Pause" ở các vị trí phù hợp trên giao diện.
+                6. Tải và phát bài hát: Sử dụng trình phát media (`self.player`) để tải và phát bài hát từ tệp tin.
+
+        Lưu ý:
+                - Phương thức này giả định rằng `self.buttons` là một danh sách chứa các nút "Play/Pause" trên giao diện.
+                - `self.next_button_index` được sử dụng để theo dõi chỉ số của nút tiếp theo sẽ được hiển thị.
+                - `self.index_track` là chỉ số của bài hát hiện tại.
+
+        Raises:
+                pymysql.Error: Nếu có lỗi xảy ra trong quá trình truy vấn cơ sở dữ liệu.
+        """
+
         db = Database()
         button = self.sender()
         button.hide()
@@ -1313,7 +1408,39 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
         self.player.play()
         self.playtrack.show()
         self.pausetrack.hide()
+        db.connection.close()
+
     def recom_play(self):
+        """
+        Bắt đầu hoặc tiếp tục phát một bài hát được đề xuất.
+
+                Phương thức này tương tự như `play`, nhưng nó xử lý các nút "Play/Pause"
+                        trong danh sách các bài hát được đề xuất (`self.recom_buttons`).
+
+        Các bước thực hiện:
+
+                1. Xác định nút được nhấn: Lấy thông tin về nút ("Play" hoặc "Pause") đã kích hoạt phương thức.
+                2. Ẩn nút hiện tại và hiển thị nút tiếp theo (nếu có) trong danh sách `self.recom_buttons`:
+                        - Nếu nhấn "Play", ẩn nút "Play" và hiển thị nút "Pause".
+                        - Nếu nhấn "Pause", ẩn nút "Pause" và hiển thị nút "Play".
+                3. Xác định chỉ số của bài hát: Tính toán chỉ số bài hát tương ứng với nút được nhấn dựa trên vị trí của nút trong danh sách `self.recom_buttons`.
+                4. Truy vấn cơ sở dữ liệu: Lấy thông tin bài hát (tên, hình ảnh) từ cơ sở dữ liệu dựa trên chỉ số bài hát.
+                5. Cập nhật giao diện người dùng:
+                        - Thay đổi hình ảnh bài hát hiển thị (`self.track_img`).
+                        - Thay đổi tên bài hát hiển thị (`self.track_name`).
+                        - Hiển thị/ẩn các nút "Play/Pause" ở các vị trí phù hợp trong danh sách `self.recom_buttons`.
+                        - Đảm bảo nút "Play" chính được hiển thị và nút "Pause" chính được ẩn. (Giả sử bạn có các nút play/pause chính ở nơi khác trên giao diện) 
+                6. Tải và phát bài hát: Sử dụng trình phát media (`self.player`) để tải và phát bài hát từ tệp tin.
+
+        Lưu ý:
+                - Phương thức này giả định rằng `self.recom_buttons` là một danh sách chứa các nút "Play/Pause" cho các bài hát được đề xuất.
+                - `self.next_button_index` được sử dụng để theo dõi chỉ số của nút tiếp theo sẽ được hiển thị trong danh sách `self.recom_buttons`.
+                - `self.index_track` là chỉ số của bài hát hiện tại (được tính toán từ `self.next_button_index`).
+
+        Raises:
+                pymysql.Error: Nếu có lỗi xảy ra trong quá trình truy vấn cơ sở dữ liệu.
+                IndexError: Nếu `self.recom_buttons` không có phần tử nào hoặc `info_track` rỗng (không có kết quả truy vấn).
+        """
         db = Database()
         button = self.sender()
         button.hide()
@@ -1327,7 +1454,31 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
         self.pausetrack_2.show()
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(f"sound\\music_track\\{self.index_track}.mp3")))
         self.player.play()
+        db.connection.close()
+
     def search_play(self):
+        """
+        Bắt đầu phát bài hát từ kết quả tìm kiếm.
+
+        Phương thức này thực hiện các bước sau:
+    
+                1. Truy vấn cơ sở dữ liệu: Lấy thông tin bài hát (tên, hình ảnh) từ cơ sở dữ liệu dựa trên `self.search_index` (giả định đây là chỉ số của bài hát trong kết quả tìm kiếm).
+                2. Cập nhật giao diện người dùng:
+                        - Thay đổi hình ảnh bài hát hiển thị (`self.track_img`).
+                        - Thay đổi tên bài hát hiển thị (`self.track_name`).
+                        - Ẩn nút "Play" chính và hiển thị nút "Pause" chính (giả định có các nút này trên giao diện).
+                        - Ẩn nút "Play" phụ và hiển thị nút "Pause" phụ (giả định có các nút này trên giao diện).
+                3. Tải và phát bài hát: Sử dụng trình phát media (`self.player`) để tải và phát bài hát từ tệp tin.
+
+        Lưu ý:
+                - Phương thức này giả định rằng `self.search_index` là chỉ số hợp lệ của bài hát trong kết quả tìm kiếm.
+                - `self.track_img`, `self.track_name`, `self.player` là các thuộc tính của đối tượng (giả định đã được khai báo trước đó).
+                - `playtrack`, `pausetrack`, `playtrack_2`, `pausetrack_2` là các nút điều khiển phát nhạc (giả định đã được khai báo trước đó).
+
+        Raises:
+                pymysql.Error: Nếu có lỗi xảy ra trong quá trình truy vấn cơ sở dữ liệu.
+                IndexError: Nếu `info_track` rỗng (không có kết quả truy vấn).
+        """
         db = Database()
         info_track = db.query(f"SELECT * FROM track WHERE track_id={self.search_index}")
         self.track_img.setPixmap(QtGui.QPixmap(f"pic\\track_img\\{self.search_index}.jpg"))
@@ -1338,7 +1489,39 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
         self.player.play()
         self.playtrack.hide()
         self.pausetrack.show()
+        db.connection.close()
+
     def TopLike_play(self):
+        """
+        Bắt đầu hoặc tiếp tục phát một bài hát từ danh sách bài hát được yêu thích nhiều nhất (TopLike).
+
+        Phương thức này tương tự như `play` và `recom_play`, nhưng xử lý các nút "Play/Pause"
+                trong danh sách các bài hát được yêu thích nhiều nhất (`self.TopLike_buttons`).
+
+        Các bước thực hiện:
+
+                1. Xác định nút được nhấn: Lấy thông tin về nút ("Play" hoặc "Pause") đã kích hoạt phương thức.
+                2. Ẩn nút hiện tại và hiển thị nút tiếp theo (nếu có) trong danh sách `self.TopLike_buttons`:
+                        - Nếu nhấn "Play", ẩn nút "Play" và hiển thị nút "Pause".
+                        - Nếu nhấn "Pause", ẩn nút "Pause" và hiển thị nút "Play".
+                3. Xác định chỉ số của bài hát: Tính toán chỉ số bài hát tương ứng với nút được nhấn dựa trên vị trí của nút trong danh sách `self.TopLike_buttons`.
+                4. Truy vấn cơ sở dữ liệu: Lấy thông tin bài hát (tên, hình ảnh) từ cơ sở dữ liệu dựa trên chỉ số bài hát.
+                5. Cập nhật giao diện người dùng:
+                        - Thay đổi hình ảnh bài hát hiển thị (`self.track_img`).
+                        - Thay đổi tên bài hát hiển thị (`self.track_name`).
+                        - Hiển thị/ẩn các nút "Play/Pause" ở các vị trí phù hợp trong danh sách `self.TopLike_buttons`.
+                        - Ẩn nút "Play" chính và hiển thị nút "Pause" chính (giả định có các nút này trên giao diện).
+                6. Tải và phát bài hát: Sử dụng trình phát media (`self.player`) để tải và phát bài hát từ tệp tin.
+
+        Lưu ý:
+                - Phương thức này giả định rằng `self.TopLike_buttons` là một danh sách chứa các nút "Play/Pause" cho các bài hát được yêu thích nhiều nhất.
+                - `self.next_button_index` được sử dụng để theo dõi chỉ số của nút tiếp theo sẽ được hiển thị trong danh sách `self.TopLike_buttons`.
+                - `self.index_track` là chỉ số của bài hát hiện tại (được tính toán từ `self.next_button_index`).
+
+        Raises:
+                pymysql.Error: Nếu có lỗi xảy ra trong quá trình truy vấn cơ sở dữ liệu.
+                IndexError: Nếu `self.TopLike_buttons` không có phần tử nào hoặc `info_track` rỗng (không có kết quả truy vấn).
+        """
         db = Database()
         button = self.sender()
         button.hide()
@@ -1352,8 +1535,29 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
         self.pausetrack_2.show()
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(f"sound\\music_track\\{self.index_track}.mp3")))
         self.player.play()
+        db.connection.close()
 
     def recom_pause(self):
+        """
+        Tạm dừng phát bài hát trong danh sách đề xuất.
+
+        Phương thức này xử lý việc tạm dừng phát nhạc khi nhấn nút "Pause" 
+                trong danh sách các bài hát được đề xuất (`self.recom_buttons`).
+
+        Các bước thực hiện:
+
+                1. Xác định nút "Pause" được nhấn.
+                2. Ẩn nút "Pause" đã nhấn và hiển thị nút "Play" tương ứng trong danh sách `self.recom_buttons`.
+                3. Hiển thị nút "Play" chính và ẩn nút "Pause" chính (giả định có các nút này trên giao diện).
+                4. Tạm dừng trình phát media (`self.player`).
+
+        Lưu ý:
+                - Phương thức này giả định rằng `self.recom_buttons` là một danh sách chứa các nút "Play/Pause" cho các bài hát được đề xuất.
+                - `self.next_button_index` được sử dụng để theo dõi chỉ số của nút tiếp theo (trong trường hợp này là nút "Play") sẽ được hiển thị.
+
+        Raises:
+                IndexError: Nếu `self.recom_buttons` không có phần tử nào.
+        """
         button = self.sender()
         button.hide()
         self.next_button_index = (self.recom_buttons.index(button) - 1) % len(self.recom_buttons)
@@ -1361,7 +1565,28 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
         self.playtrack_2.show()
         self.pausetrack_2.hide()
         self.player.pause()
+
     def TopLike_pause(self):
+        """
+        Tạm dừng phát bài hát trong danh sách "TopLike" (các bài hát được yêu thích nhiều nhất).
+
+        Phương thức này xử lý việc tạm dừng phát nhạc khi nhấn nút "Pause" trong danh sách
+                các bài hát được yêu thích nhiều nhất (`self.TopLike_buttons`).
+
+        Các bước thực hiện:
+
+                1. Xác định nút "Pause" được nhấn.
+                2. Ẩn nút "Pause" đã nhấn và hiển thị nút "Play" tương ứng trong danh sách `self.TopLike_buttons`.
+                3. Hiển thị nút "Play" chính và ẩn nút "Pause" chính (giả định có các nút này trên giao diện).
+                4. Tạm dừng trình phát media (`self.player`).
+
+        Lưu ý:
+                - Phương thức này giả định rằng `self.TopLike_buttons` là một danh sách chứa các nút "Play/Pause" cho các bài hát được yêu thích nhiều nhất.
+                - `self.next_button_index` được sử dụng để theo dõi chỉ số của nút tiếp theo (trong trường hợp này là nút "Play") sẽ được hiển thị.
+
+        Raises:
+                IndexError: Nếu `self.TopLike_buttons` không có phần tử nào.
+        """
         button = self.sender()
         button.hide()
         self.next_button_index = (self.TopLike_buttons.index(button) - 1) % len(self.TopLike_buttons)
@@ -1369,7 +1594,27 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
         self.playtrack_2.show()
         self.pausetrack_2.hide()
         self.player.pause()
+
     def pause(self):
+        """
+        Tạm dừng phát nhạc hiện tại.
+
+        Phương thức này xử lý việc tạm dừng phát nhạc khi nhấn nút "Pause". 
+        Các bước thực hiện:
+
+                1. Xác định nút "Pause" được nhấn.
+                2. Ẩn nút "Pause" đã nhấn và hiển thị nút "Play" tương ứng trong danh sách `self.buttons`.
+                3. Hiển thị nút "Play" chính và ẩn nút "Pause" chính (giả định có các nút này trên giao diện).
+                4. Hiển thị nút "Play" phụ và ẩn nút "Pause" phụ (giả định có các nút này trên giao diện).
+                5. Tạm dừng trình phát media (`self.player`).
+
+        Lưu ý:
+                - Phương thức này giả định rằng `self.buttons` là một danh sách chứa các nút "Play/Pause" cho các bài hát chính.
+                - `self.next_button_index` được sử dụng để theo dõi chỉ số của nút tiếp theo (trong trường hợp này là nút "Play") sẽ được hiển thị.
+
+        Raises:
+                IndexError: Nếu `self.buttons` không có phần tử nào.
+        """
         button = self.sender()
         button.hide()
         self.next_button_index = (self.buttons.index(button) - 1) % len(self.buttons)
@@ -1378,9 +1623,25 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
         self.pausetrack_2.hide()
         self.playtrack.show()
         self.pausetrack.hide()
-
         self.player.pause()
+
     def search_pause(self):
+        """
+        Tạm dừng phát bài hát từ kết quả tìm kiếm.
+
+        Phương thức này xử lý việc tạm dừng phát nhạc khi nhấn nút "Pause" sau khi đã phát
+                một bài hát từ kết quả tìm kiếm.
+
+        Các bước thực hiện:
+
+                1. Hiển thị nút "Play" chính và ẩn nút "Pause" chính (giả định có các nút này trên giao diện).
+                2. Hiển thị nút "Play" phụ và ẩn nút "Pause" phụ (giả định có các nút này trên giao diện).
+                3. Tạm dừng trình phát media (`self.player`).
+
+        Lưu ý:
+                - Phương thức này không thay đổi trạng thái của các nút "Play/Pause" trong danh sách kết quả tìm kiếm.
+                - `self.player`, `self.playtrack`, `self.pausetrack`, `self.playtrack_2` và `self.pausetrack_2` là các thuộc tính của đối tượng, giả định đã được khai báo trước đó.
+        """
         self.playtrack_2.show()
         self.pausetrack_2.hide()
         self.playtrack.show()
@@ -1388,12 +1649,40 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
         self.player.pause()
 
     def play_app(self):
+        """
+        Tiếp tục phát nhạc hoặc bắt đầu phát từ đầu nếu chưa phát.
+
+        Phương thức này thực hiện các bước sau:
+        
+                1. Ẩn nút "Play" chính và nút "Play" phụ (giả định có các nút này trên giao diện).
+                2. Hiển thị nút "Pause" chính và nút "Pause" phụ (giả định có các nút này trên giao diện).
+                3. Tiếp tục phát nhạc từ vị trí hiện tại bằng trình phát media (`self.player`).
+                Nếu nhạc chưa được phát, phương thức sẽ bắt đầu phát từ đầu.
+
+        Lưu ý:
+                - `self.player`, `self.playtrack`, `self.pausetrack`, `self.playtrack_2` và `self.pausetrack_2` là các thuộc tính của đối tượng, giả định đã được khai báo trước đó.
+        """
         self.pausetrack_2.show()
         self.playtrack_2.hide()
         self.playtrack.hide()
         self.pausetrack.show()
         self.player.play()
+
     def pause_app(self):
+        """
+        Tạm dừng phát nhạc hiện tại.
+
+        Phương thức này xử lý việc tạm dừng phát nhạc.
+
+        Các bước thực hiện:
+
+                1. Hiển thị nút "Play" chính và nút "Play" phụ (giả định có các nút này trên giao diện).
+                2. Ẩn nút "Pause" chính và nút "Pause" phụ (giả định có các nút này trên giao diện).
+                3. Tạm dừng trình phát media (`self.player`).
+
+        Lưu ý:
+                - `self.player`, `self.playtrack`, `self.pausetrack`, `self.playtrack_2` và `self.pausetrack_2` là các thuộc tính của đối tượng, giả định đã được khai báo trước đó.
+        """        
         self.playtrack_2.show()
         self.pausetrack_2.hide()
         self.playtrack.show()
@@ -1401,6 +1690,22 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
         self.player.pause()
 
     def next_app(self):
+        """
+        Phát bài hát tiếp theo trong danh sách nhạc.
+
+        Phương thức thực hiện các bước sau:
+    
+                1. Tăng chỉ số bài hát hiện tại (`self.index_track`) lên 1.
+                2. Truy vấn cơ sở dữ liệu để lấy thông tin của bài hát tiếp theo (tên, hình ảnh).
+                3. Cập nhật giao diện người dùng (hình ảnh, tên bài hát) để hiển thị thông tin bài hát mới.
+                4. Tải và phát bài hát mới bằng trình phát media (`self.player`).
+
+        Xử lý lỗi:
+                Nếu không tìm thấy bài hát tiếp theo (ví dụ: đang ở bài hát cuối cùng), phương thức sẽ phát bài hát đầu tiên trong danh sách (giả định bài hát có `track_id` là 1).
+
+        aises:
+                pymysql.Error: Nếu có lỗi xảy ra trong quá trình truy vấn cơ sở dữ liệu.
+        """
         try:
                 db = Database()
                 self.index_track = self.index_track + 1
@@ -1409,6 +1714,7 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
                 self.track_name.setText(info_track[0]['track_name'])
                 self.player.setMedia(QMediaContent(QUrl.fromLocalFile(f"sound\\music_track\\{self.index_track}.mp3")))
                 self.player.play()
+                db.connection.close()
         except Exception as e:
                 db = Database()
                 info_track = db.query(f"SELECT * FROM track WHERE track_id=1")
@@ -1416,7 +1722,25 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
                 self.track_name.setText(info_track[0]['track_name'])
                 self.player.setMedia(QMediaContent(QUrl.fromLocalFile(f"sound\\music_track\\1.mp3")))
                 self.player.play()
+                db.connection.close()
+
     def previous_app(self):
+        """
+        Phát bài hát trước đó trong danh sách nhạc.
+
+        Phương thức thực hiện các bước sau:
+
+                1. Giảm chỉ số bài hát hiện tại (`self.index_track`) xuống 1.
+                2. Truy vấn cơ sở dữ liệu để lấy thông tin của bài hát trước đó (tên, hình ảnh).
+                3. Cập nhật giao diện người dùng (hình ảnh, tên bài hát) để hiển thị thông tin bài hát mới.
+                4. Tải và phát bài hát mới bằng trình phát media (`self.player`).
+
+        Xử lý lỗi:
+                Nếu không tìm thấy bài hát trước đó (ví dụ: đang ở bài hát đầu tiên), phương thức sẽ phát bài hát cuối cùng trong danh sách (giả định bài hát có `track_id` là 100).
+
+        Raises:
+                pymysql.Error: Nếu có lỗi xảy ra trong quá trình truy vấn cơ sở dữ liệu.
+        """
         try:
                 db = Database()
                 self.index_track = self.index_track - 1
@@ -1425,6 +1749,7 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
                 self.track_name.setText(info_track[0]['track_name'])
                 self.player.setMedia(QMediaContent(QUrl.fromLocalFile(f"sound\\music_track\\{self.index_track}.mp3")))
                 self.player.play()
+                db.connection.close()
         except Exception as e:
                 db = Database()
                 info_track = db.query(f"SELECT * FROM track WHERE track_id=100")
@@ -1432,20 +1757,54 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
                 self.track_name.setText(info_track[0]['track_name'])
                 self.player.setMedia(QMediaContent(QUrl.fromLocalFile(f"sound\\music_track\\100.mp3")))
                 self.player.play()
+                db.connection.close()
 
     def change_volume(self, value):
+        """
+                Thay đổi âm lượng của trình phát media.
+
+        Args:
+                value (int): Giá trị âm lượng mới (0-100).
+        """
         self.player.setVolume(value)
 
     def position_changed(self, position):
+        """
+                Cập nhật thanh trượt (horizontalSlider) khi vị trí phát media thay đổi.
+
+        Args:
+                position (int): Vị trí mới của media (tính bằng mili giây).
+        """
         self.horizontalSlider.setValue(position)
 
     def duration_changed(self, duration):
+        """
+                Cập nhật phạm vi của thanh trượt khi độ dài của media thay đổi.
+
+        Args:
+                duration (int): Tổng độ dài của media (tính bằng mili giây).
+        """
         self.horizontalSlider.setRange(0, duration)
 
     def set_position(self, position):
+        """
+                Đặt vị trí phát của media.
+
+        Args:
+                position (int): Vị trí mới của media (tính bằng mili giây).
+        """
         self.player.setPosition(position)
 
     def show_all(self):
+        """
+        Hiển thị danh sách tất cả bài hát.
+
+        hương thức này ẩn các danh sách bài hát khác (nếu có) và hiển thị danh sách tất cả bài hát (`self.scrollArea_AllTrack`).
+
+        Lưu ý:
+                - Phương thức này giả định rằng `self.scrollArea_AllTrack`, `self.scrollArea_RecommendTrack`,
+                        `self.scrollArea_TopLikeTrack`, và có thể có `self.scrollArea_SearchTrack` đã được khai báo và thiết lập trước đó.
+        """
         self.scrollArea_AllTrack.show()
         self.scrollArea_RecommendTrack.hide()
         self.scrollArea_TopLikeTrack.hide()
@@ -1453,6 +1812,15 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
                 self.scrollArea_SearchTrack.hide()
 
     def show_recommend(self):
+        """
+        Hiển thị danh sách các bài hát gợi ý.
+
+        Phương thức này ẩn các danh sách bài hát khác (nếu có) và hiển thị danh sách bài hát gợi ý (`self.scrollArea_RecommendTrack`).
+
+        Lưu ý:
+                - Phương thức này giả định rằng `self.scrollArea_RecommendTrack`, `self.scrollArea_AllTrack`,
+                        `self.scrollArea_TopLikeTrack`, và có thể có `self.scrollArea_SearchTrack` đã được khai báo và thiết lập trước đó.
+        """
         self.scrollArea_RecommendTrack.show()
         self.scrollArea_AllTrack.hide()
         self.scrollArea_TopLikeTrack.hide()
@@ -1460,6 +1828,15 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
                 self.scrollArea_SearchTrack.hide()
 
     def show_toplike(self):
+        """
+        Hiển thị danh sách các bài hát được yêu thích nhiều nhất (TopLike).
+
+        Phương thức này ẩn các danh sách bài hát khác (nếu có) và hiển thị danh sách bài hát TopLike (`self.scrollArea_TopLikeTrack`).
+
+        Lưu ý:
+                - Phương thức này giả định rằng `self.scrollArea_TopLikeTrack`, `self.scrollArea_RecommendTrack`,
+                        `self.scrollArea_AllTrack`, và có thể có `self.scrollArea_SearchTrack` đã được khai báo và thiết lập trước đó.
+        """
         self.scrollArea_TopLikeTrack.show()
         self.scrollArea_RecommendTrack.hide()
         self.scrollArea_AllTrack.hide()
@@ -1468,6 +1845,12 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
  
 
     def retranslateUi(self, AccPageWindow):
+        """
+        Dịch lại nội dung văn bản trên giao diện người dùng (nếu cần).
+
+        Args:
+                AccPageWindow (QtWidgets.QMainWindow): Cửa sổ chính chứa trang thông tin tài khoản.
+        """
         _translate = QtCore.QCoreApplication.translate
         AccPageWindow.setWindowTitle(_translate("AccPageWindow", "AccPageWindow"))
         self.watefeel.setText(_translate("AccPageWindow", "WaterFeel"))
@@ -1482,7 +1865,11 @@ class Ui_AccPageWindow(QtWidgets.QMainWindow):
         self.seasons.setText(_translate("AccPageWindow", "Seasons"))
         self.track_name.setText(_translate("AccPageWindow", ""))
         self.volume_text.setText(_translate("AccPageWindow", "Volume"))
+
     def change_mode(self):
+        """
+        Phương thức chuyển đổi trạng thái Light/Dark Mode cho acc_page.py
+        """
         if (self.LDmode == 0):
                 self.LDmode = 1
                 self.content.setStyleSheet("background-color: rgb(0, 0, 0)")

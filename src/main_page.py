@@ -4,7 +4,25 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from sign_inup import Ui_SignInUpWindow
 
 class Ui_MainPageWindow(object):
+    """
+    Class Ui_MainPageWindow: Tạo giao diện người dùng chính của ứng dụng.
+
+    Class này thiết lập giao diện cho trang chủ, bao gồm:
+        - Header: chứa logo, nút "Sign in/Sign up".
+        - Content: hiển thị hình ảnh nền.
+        - Chức năng: chuyển đến giao diện đăng nhập/đăng ký khi nút "Sign in/Sign up" được nhấn.
+
+    Attributes:
+        None (Tất cả các thành phần giao diện được khởi tạo trong phương thức `setupUi`).
+    """
+    
     def setupUi(self, MainWindow):
+        """
+        Thiết lập giao diện người dùng chính.
+
+        Args:
+            MainWindow (QMainWindow): Đối tượng cửa sổ chính cần thiết lập giao diện.
+        """
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1944, 1204)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -121,6 +139,21 @@ class Ui_MainPageWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
     
     def signinup(self):
+        """
+        Mở cửa sổ đăng nhập/đăng ký và ẩn cửa sổ chính.
+
+        Phương thức này thực hiện các bước sau:
+
+            1. Tạo một đối tượng cửa sổ mới (`self.OtherWindow`) thuộc lớp `QtWidgets.QMainWindow`.
+            2. Tạo một đối tượng giao diện (`self.ui`) thuộc lớp `Ui_SignInUpWindow` (giả định lớp này đã được định nghĩa trước đó).
+            3. Thiết lập giao diện cho cửa sổ mới bằng cách gọi phương thức `self.ui.setupUi(self.OtherWindow)`.
+            4. Hiển thị cửa sổ mới (`self.OtherWindow.show()`).
+            5. Ẩn cửa sổ chính (`MainWindow.hide()`).
+
+        Lưu ý:
+            - Phương thức này giả định rằng lớp `Ui_SignInUpWindow` đã được định nghĩa và chứa phương thức `setupUi` để thiết lập giao diện đăng nhập/đăng ký.
+            - `MainWindow` là đối tượng cửa sổ chính, cần được truyền vào phương thức này từ bên ngoài.
+        """
         self.OtherWindow = QtWidgets.QMainWindow()
         self.ui = Ui_SignInUpWindow()
         self.ui.setupUi(self.OtherWindow)
@@ -128,6 +161,12 @@ class Ui_MainPageWindow(object):
         MainWindow.hide()
 
     def retranslateUi(self, MainWindow):
+        """
+        Cài đặt lại nội dung văn bản cho các thành phần giao diện.
+
+        Args:
+            MainWindow (QMainWindow): Đối tượng cửa sổ chính cần cài đặt lại nội dung.
+        """
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.frame_signinup.setText(_translate("MainWindow", "Sign in/Sign up"))
